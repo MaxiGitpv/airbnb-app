@@ -72,7 +72,13 @@ src
     auth.controllers.js
     auth.http.js
     auth.router.js
+ middleware
+    adminRole.js
+    auth.middleware.js
  users
+   test
+     integration.test.js
+     unit.test.js
     users.controllers.js
     users.http.js
     users.router.js
@@ -96,14 +102,25 @@ ________________________________
     npm i dotenv
     npx create-react-app
 
+# Dependencias de incriptar contraseñas y aleatorias
+    npm i bcrypt 
+    npm i uuid
 # Dependencias de Authorizacion
     npm i jsonwebtoken
 
-# Dependencias para Login
-    npm i passport-jwt
-    npm i passport
-    npm i jsonwebtoken
+# Dependencias para Login   
+    npm install jsonwebtoken
+    npm install passport-jwt
+    npm install passport
 
+# Dependencias de testing 
+    npm i -D mocha chai chai-http
+
+# Dependencias de IMAGENES 
+    npm install express multer
+
+# Dependencias de BASES DE DATOS
+    npm install sequelize pg pg-hstore
 
 
 
@@ -527,8 +544,8 @@ const hashPassword = (root) => {     // funcion para incriptar las contraseñas,
     return bcrypt.hashSync(root, 10)  // retornamos bcrypt con su metodo hashSync(le pasamos la contraseña, y la salt= que son las veces que se itera la contraseña) 
 }
 
-const comparePassword = (root, hashPassword) => {   // funcion para comparar la contraseña
-    return bcrypt.compareSync(root, hashPassword)  // retornamos bcrypt con su metodo compareSync(le pasamos la contraseña, y hashPassword= que es la contraseña incritada (root))  
+const comparePassword = (root, hashePassword) => {   // funcion para comparar la contraseña
+    return bcrypt.compareSync(root, hashePassword)  // retornamos bcrypt con su metodo compareSync(le pasamos la contraseña, y hashPassword= que es la contraseña incritada (root))  
 }
 
 module.exports = {   // exportamos las funciones para usarlas en los controladores
@@ -647,19 +664,13 @@ module.exports = (passport) => {
 
 ```
 
-
-
-
-
-
-# Autenticacion VS Autorizacion 
-________________________________
 # MIDDLEWARE 
  Passport (Solo para Login y para proteger rutas)
 
-## Lo primero sera crear el servicio para poder hacer login y crear usuarios.
+ Lo primero sera crear el servicio para poder hacer login y crear usuarios.
 _____________________________________________________________________________
-```bash
+```
+bash
 
 npm install bcrypt
 npm install passport-jwt
@@ -710,7 +721,7 @@ app.get('/todos', passport.authenticate('jwt', {session: false}), (req, res) => 
 })
 ```
 
-# Ejemplo de login
+ Ejemplo de login
 
 Usuario:
 
@@ -761,10 +772,335 @@ const checkUserCredentials = (username, password) => {
 };
 ```
 
-hola-Grupo
 
 
 
 
 
 
+# BCRYPT 
+    npm install bcrypt
+```JS
+const bcrypt = require('bcrypt')    //importamos la libreria bcrypt
+
+const hashPassword = (root) => {     // funcion para incriptar las contraseñas, con parametros las contraseña root
+    return bcrypt.hashSync(root, 10)  // retornamos bcrypt con su metodo hashSync(le pasamos la contraseña, y la salt= que son las veces que se itera la contraseña) 
+}
+
+const comparePassword = (root, hashPassword) => {   // funcion para comparar la contraseña
+    return bcrypt.compareSync(root, hashPassword)  // retornamos bcrypt con su metodo compareSync(le pasamos la contraseña, y hashPassword= que es la contraseña incritada (root))  
+}
+
+module.exports = {   // exportamos las funciones para usarlas en los controladores
+    hashPassword,
+    comparePassword
+}
+```
+
+# TESTING 
+
+
+UNIT.TEST.JS 
+
+    npm i -D mocha chai chai-http
+
+
+```js
+const { assert } = require("chai")
+const {it, describe } = require("mocha")
+
+
+const userControllers = require('../users.controllers')
+
+// ruta en terminar .\node_modules\.bin\mocha ./src/users/test/unit.test.js       
+
+
+
+describe('Test  unitario de mis usuarios', () => {
+    
+    it( 'Should return new user when I send correct data', (done) => {
+        const body = {
+            
+            first_name: "maximo", 
+            last_name: "Tester", 
+            email: "dataemail.com", 
+            password: "123456",   
+            phone: 3214987,
+            birthday_date:"10/01/2000",
+            country: "datacountry",
+        }
+        const data = userControllers.createUser(body)
+
+        assert.equal(data.first_name, body.first_name)
+        assert.equal(data.rol, 'normal')
+        assert.notEqual(data.password, body.password)
+        assert.equal(data.profile_image, '')
+        done()
+    })
+    it( 'Should return new user when I sent correcto data', (done) => {
+        const body = {
+            
+            first_name: "Usuario de test", 
+            last_name: "Tester", 
+            email: "dataemail.com", 
+            password: "123456",   
+            phone: "321654987",
+            birthday_date:"10/01/2000",
+            country: "datacountry",
+            profile_image: 'asd'
+
+        }
+        const data = userControllers.createUser(body)
+
+        assert.equal(data.first_name, body.first_name)
+        assert.equal(data.rol, 'normal')
+        assert.notEqual(data.password, body.password)
+        assert.equal(data.profile_image, 'asd')
+        done()
+    })
+})
+
+
+
+```
+
+INTEGRATION.TEST.JS
+
+    npm i -D mocha chai chai-http
+
+    ```js
+
+const chai = require("chai")
+const {it, describe} = require("mocha")
+const chaiHttp = require('chai-http')
+
+
+const app = require('../../app')
+//ruta para testing en terminarl   .\node_modules\.bin\mocha ./src/users/test/integration.test.js
+
+
+chai.use(chaiHttp)
+
+describe('Suite de test de integracion de Usuarios', () => {
+    
+    it( 'Should return 204 when I delete my own user with my credentials', (done) => {
+        chai.request(app)
+            .delete('/api/v1/users/me')
+            .set('Authorization', 'JWT eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImUwN2ZlNDQ4LWIzMjctNGFlYS1hMTMxLTdkYzkzMDBjOGY1NiIsImVtYWlsIjoibWF4aTAxQGV4YW1wbGUuY29tIiwicm9sIjoibm9ybWFsIiwiaWF0IjoxNjYyOTQ0OTg4fQ.-WA1xkFpf8k7J7Zjn2dyvpq-pQvCe3uQqxUK175M4ps')
+            .end((err, res) => {
+                chai.assert.equal(res.status, 204)
+                done()
+            })
+
+    })
+})
+
+ ```
+
+
+
+# MULTER 
+
+    npm install express multer
+
+```s
+
+const multer = require('multer')
+const path = require('path')
+
+
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, path.resolve('uploads/'))
+    },
+    filename: (req, file, cb) => {
+        cb(null,  'academlo' + Date.now() + '-' + file.originalname)
+    }
+    
+})
+
+const upload = multer({storage})
+
+exports.upload = upload 
+
+```
+
+# SEQUELIZE BASE DE DATOS
+
+    npm install sequelize pg pg-hstore
+
+    CARPETA utils - database.js
+
+    ```js
+    const {Sequelize} = require('sequelize')
+
+    const db = new Sequelize({
+    dialect: 'postgres',
+    host: 'localhost',
+    username: 'postgres',
+    password: 'root2022',
+    database: 'skeleton',
+    port: 5432
+    })
+
+module.exports ={
+    db
+}
+    ```
+# models 
+
+    CARPETA models - initModel.js
+```js
+    const User = require('./user.model')
+const Posts = require('./posts.model')
+
+
+const iniModels = () => {
+    User.hasMany(Posts)  // User has many posts
+    Posts.belongsTo(User)  // Posts belongs to user
+}
+
+module.exports = iniModels
+    
+```
+ CARPETA models - user.model.js
+```js
+    /*
+    {
+    "id": "e07fe448-b327-4aea-a131-7dc9300c8f56",
+    "first_name": "Maximo 1",
+    "last_name": "Perea",
+    "email": "maxi01@example.com",
+    "password": "$2b$10$mTGU0Suc0YrwVfZcvEo83OLxgR5vP8Meea6IV3i9wf29dvmYgPuGS", //? root
+    "phone": "+57321548848",
+    "birthday_date": "07/12/1990",
+    "rol": "normal",
+    "profile_image": "imagen.com/img/example.png",
+    "country": "Colombia",
+    "is_active": true,
+    "verified": false
+  }
+*/
+
+const { DataTypes } = require('sequelize')
+
+const {db} = require('../utils/database')
+
+const Users = db.define('users', {
+    id: {
+        primaryKey: true,
+        type: DataTypes.UUID,
+        allownull: false,
+    },
+    first_name: {
+        allowNull: false,
+        type: DataTypes.STRING
+    },
+    last_name: {
+        allowNull: false,
+        type: DataTypes.STRING
+    }, 
+    email: {
+        allowNull: false,
+        type: DataTypes.STRING(30),
+        validate: {
+            isEmail: true
+        }
+    },
+    password: {
+        allowNull: false,
+        type: DataTypes.STRING,
+        validate: {
+            min:8,
+        }
+    },
+    phone: {
+        allowNull: false,
+        type: DataTypes.STRING,
+    },
+    birthday_date: {
+        allowNull: false,
+        type: DataTypes.DATEONLY,
+    },
+    role: {
+        allowNull: false,
+        type: DataTypes.STRING,
+        dafaulValue: 'normal',
+    },
+    profile_image: {
+        type: DataTypes.STRING,
+        validate: {
+            isUrl: true
+        }
+    },
+    country: {
+        allowNull: false,
+        type: DataTypes.STRING,
+    },
+    is_active: {
+        allowNull: false,
+        type: DataTypes.BOOLEAN,
+        defaultValues: true
+    },
+    verified: {
+        allowNull: false,
+        type: DataTypes.BOOLEAN,
+        defaultValues: false
+
+    }
+})
+
+module.exports = Users
+
+``` 
+
+ CARPETA models - posts.model.js
+```js
+    /*
+    {
+    "id": "e07fe448-b327-4aea-a131-7dc9300c8f56",
+    "first_name": "Maximo 1",
+    "last_name": "Perea",
+    "email": "maxi01@example.com",
+    "password": "$2b$10$mTGU0Suc0YrwVfZcvEo83OLxgR5vP8Meea6IV3i9wf29dvmYgPuGS", //? root
+    "phone": "+57321548848",
+    "birthday_date": "07/12/1990",
+    "rol": "normal",
+    "profile_image": "imagen.com/img/example.png",
+    "country": "Colombia",
+    "is_active": true,
+    "verified": false
+  }
+*/
+
+const { DataTypes } = reequire('sequelize')
+
+const {db} = require('../utils/database')
+
+const Posts = db.define('posts', {
+    id: {
+        primaryKey: true,
+        type: DataTypes.UUID,
+        allownull: false,
+    },
+    title: {
+        allowNull: false,
+        type: DataTypes.STRING
+    },
+    content: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
+    user_id: {
+        allowNull: false,
+        type: DataTypes.UUID
+    },
+    status: {
+        type: DataTypes.STRING,
+        defaultValue: "active",
+    },   
+})
+module.exports = Posts
+
+
+```

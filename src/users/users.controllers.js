@@ -1,5 +1,7 @@
 const uuid = require('uuid')
 const { hashPassword } = require('../utils/crypt')
+const Users = require('../models/user.model')
+
 
 
 const userDB = [{
@@ -10,7 +12,7 @@ const userDB = [{
     "password": "$2b$10$mTGU0Suc0YrwVfZcvEo83OLxgR5vP8Meea6IV3i9wf29dvmYgPuGS", //? root
     "phone": "+57321548848",
     "birthday_date": "07/12/1990",
-    "rol": "normal",
+    "role": "admin",
     "profile_image": "imagen.com/img/example.png",
     "country": "Colombia",
     "is_active": true,
@@ -24,7 +26,7 @@ const userDB = [{
     "password": "$2b$10$ETe/HyBFgWwY4ZwzodjnIeGFXv8HX/KtXp0jGlHMgFyEhO1Nmtfo2", //? root123
     "phone": "+57321548848",
     "birthday_date": "08/11/1994",
-    "rol": "normal",
+    "role": "normal",
     "profile_image": "imagen.com/img/example.png",
     "country": "Colombia",
     "is_active": true,
@@ -38,7 +40,7 @@ const userDB = [{
     "password": "$2b$10$YUDDWTlIvigGQxqCOevhsOqiLpDsCMUBMTrBwVLzGfNPm/.gLtWd6", //? root123456
     "phone": "+57321548848",
     "birthday_date": "9/11/2020",
-    "rol": "normal",
+    "role": "normal",
     "profile_image": "imagen.com/img/example.png",
     "country": "Colombia",
     "is_active": true,
@@ -73,77 +75,144 @@ const userDB = [{
 
 
 //GET
-const getAllUsers = () => {
-    return userDB
+const getAllUsers = async () => {
+    const data = await Users.findAll({
+        attributes: {
+            exclude: ['password']
+        }
+    })
+    return data
     //? select * from users;
 }
 
 
+
 //GET/:id
-const getUserById = (id)=> {
-    const data = userDB.filter((item) => item.id === id)
-    return data.length ? data[0] : false
+const getUserById = async (id)=> {
+
+    const data = await Users.findOne({
+        where: {
+            id: id
+        },
+        attributes: {
+            exclude: ['password']
+        }
+    }) 
+    return data
+
+    // const data = userDB.filter((item) => item.id === id)
+    // return data.length ? data[0] : false
     //? select * from users where id = ${id};
 }
 
 
 
 //POST
-const createUser = (data) => {
-    const newUser = {
-        id: uuid.v4(), //obligatorio y unico
-        first_name: data.first_name, //obligatorio
-        last_name: data.last_name, //obligatorio
-        email: data.email, //obligatorio y unico
-        password: hashPassword(data.password),   //obligatorio
-        phone: data.phone ?  data.phone : '',
-        birthday_date: data.birthday_date,  //obligatorio
-        rol: 'normal',   //obligatorio y por defecto "normal"
-        profile_image: data.profile_image ? data.profile_image : '',
-        country: data.country, //obligatorio
-        is_active: true,  //obligatorio y por defecto true
-        verified: false //obligatorio y por defecto false
-    }
-    userDB.push(newUser)
+// const createUser = async (data) => {
+//     const newUser = await Users.create({
+//         id: uuid.v4(),
+//         first_name: data.first_name, 
+//         last_name: data.last_name, 
+//         email: data.email, 
+//         password: hashPassword(data.password),   
+//         phone: data.phone ?  data.phone : '',
+//         birthday_date: data.birthday_date,  
+//         role: "normal",  
+//         profile_image: data.profile_image,
+//         country: data.country, 
+//         is_active: true, 
+//         verified: false 
+//     })
+//     return newUser
+// }
+
+
+// controlador con siquelize
+
+const createUser = async (data) => {
+    const newUser = await Users.create({
+        ...data,
+        id: uuid.v4(),
+        password: hashPassword(data.password),   
+        role: "normalitoMijo",  
+        is_active: true, 
+        verified: true 
+    })
     return newUser
 }
 
 
 
+
+
+
+
+
 //PUT
-const editUser = (id, data) => {
-    const index = userDB.findIndex(user => user.id === id)
-    if (index !== -1){
-        userDB[index] ={
-            id: id,
-            first_name: data.first_name, 
-            last_name: data.last_name,
-            email: data.email, 
-            password: userDB[index].password,
-            phone: data.phone,
-            birthday_date: data.birthday_date,
-            rol: 'normal',
-            profile_image: data.profile_image,
-            country: data.country, 
-            is_active: true, 
-            verified: false
-        } 
-        return userDB[index]
-    }else {
-        return createUser(data)
+const editUser = async (userId, data, userRol) => {
+   
+
+    if(userRol === 'admin'){
+        const {id, password, verified, ...newData} = data
+
+        const response = await Users.update({
+            ...newData
+        }, { 
+            where: {
+                id: userId
+            }
+        })
+        return response
+    } else {
+        const {id, password, verified, role, ...newData} = data
+        
+        const response = await Users.update({
+            ...newData
+        }, { 
+            where: {
+                id: userId
+            }
+        })
+        return response
     }
+
 }
+
+//     if (index !== -1){
+//         userDB[index] ={
+//             id: id,
+//             first_name: data.first_name, 
+//             last_name: data.last_name,
+//             email: data.email, 
+//             password: userDB[index].password,
+//             phone: data.phone,
+//             birthday_date: data.birthday_date,
+//             role: userRol === 'admin' ? data.rol: 'normal',
+//             profile_image: data.profile_image,
+//             country: data.country, 
+//             is_active: true, 
+//             verified: false
+//         } 
+//         return userDB[index]
+//     }else {
+//         return createUser(data)
+//     }
+// }
+
+
 
 //DELETE/:id
 const deleteUser = (id) => {
-    const index = userDB.findIndex(user => user.id === id)
-    if(index !== -1 ){
-        userDB.splice(index, 1)
-        return true
-    }else {
-        return false
-    }
+    const data = Users.destroy({
+        where: {
+            id
+        }
+    })
+    return data
 }
+
+
+
 
 //COMPARE PASSWORD 
 
@@ -151,6 +220,21 @@ const getPostByEmail = (email) => {
     const data = userDB.filter(item => item.email === email)
     return data.length ? data[0] : false
 } 
+
+
+
+const editProfileImg = (userID, imgUrl) => {
+    const index = userDB.findIndex(user => user.id === userID)
+    if(index !== -1){
+        userDB[index].profile_image = imgUrl
+        return userDB[index]
+    }
+    return false
+
+}
+
+
+
 
 
 
@@ -283,6 +367,7 @@ module.exports = {
    createPost,
    editPost,
    deletePost,
+   editProfileImg
 
 }
 

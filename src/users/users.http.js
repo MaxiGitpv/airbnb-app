@@ -3,19 +3,30 @@ const userControllers = require('./users.controllers')
 
 
 const getAll = (req, res) => {
-    const data = userControllers.getAllUsers()
-    res.status(200).json({ item: data.length, users: data })
+    userControllers.getAllUsers()
+    .then((response) => {
+        res.status(200).json({ item: response.length, users: response })
+    })
+    .catch(err =>{ res.status(400).json(err)
+    
+    })
 }
 
 const getById = (req, res) => {
     const id = req.params.id
-    const data = userControllers.getUserById(id)
+    userControllers.getUserById(id)
 
-    if (data) {
-        res.status(200).json(data)
-    } else {
-        res.status(404).json({ message: `El usuario ${id} no existe` })
-    }
+    .then((response) => {
+        res.status(200).json(response)
+    })
+    .catch((err) => res.status(400).json({ message: `El usuario ${id} no existe` }))
+
+
+    // if (data) {
+    //     res.status(200).json(data)
+    // } else {
+    //     res.status(404).json({ message: `El usuario ${id} no existe` })
+    // }
 }
 
 // {
@@ -57,9 +68,16 @@ const register = (req, res) => {
             }
         })
     }else {
-      const response = userControllers.createUser(data) 
-      return res.status(201).json(
-        {message: ` User: ${response.first_name} has been created succesfully`, user: response})
+      userControllers.createUser(data) 
+      .then((response) => {
+          res.status(201).json({ 
+            message: ` User has been created succesfully with id: ${response.id}`,
+            user: response,
+             })
+        })
+        .catch(err => {
+        res.status(400).json({err})
+        })
     }
 }
 
@@ -67,14 +85,18 @@ const register = (req, res) => {
 
 const remove = (req, res) => {
     const id = req.params.id
-    const data = userControllers.deleteUser(id)
+    userControllers.deleteUser(id)
+    .then((response) => {
+        if (response){
+            res.status(204).json()
+        }else {
+            res.status(400).json({message: 'Invalid ID'})
+        }
     
-    if(data){
-        return res.status(204).json()
-    } else {
-        return res.status(400).json({ message: 'Invalid ID'})
-    }
+    })
 }
+
+
 
     const edit = (req, res) => {
         const id = req.params.id
@@ -86,7 +108,7 @@ const remove = (req, res) => {
         !data.last_name ||
         !data.email ||
         !data.phone ||
-        !data.rol ||
+        !data.role ||
         !data.profile_image ||
         !data.birthday_date ||
         !data.country ||
@@ -97,9 +119,8 @@ const remove = (req, res) => {
               first_name: 'string',
               last_name: 'string',
               email: 'example@example.com',
-              password: 'string',
               phone: '+57321548848',
-              rol: 'normal',
+              role: 'normal',
               profile_image: 'imagen.com/img/example.png',
               birthday_date: 'DD/MM/AAAA',
               country: 'string',
@@ -110,6 +131,23 @@ const remove = (req, res) => {
         const response = userControllers.editUser(id, data)
         return res.status(200).json({ message: 'ID edited succesfully', user: response})
       }
+    }
+
+    const getMyUser = (req, res) => {
+        const id = req.user.id
+        const data = userControllers.getUserById(id)
+        res.status(200).json(data)
+    }
+
+    const removeMyUser = (req, res) => {
+        const id = req.user.id
+        const data = userControllers.deleteUser(id)
+        
+        if(data){
+            res.status(204).json()
+        } else {
+            res.status(400).json({ message: 'Invalid ID'})
+        }
     }
 
 
@@ -134,7 +172,7 @@ const remove = (req, res) => {
                   last_name: 'string',
                   email: 'example@example.com',
                   phone: '+57321548848',
-                  rol: 'normal',
+                  role: 'normal',
                   profile_image: 'imagen.com/img/example.png',
                   birthday_date: 'DD/MM/AAAA',
                   country: 'string',
@@ -148,9 +186,43 @@ const remove = (req, res) => {
           }
     }
 
+    
+    const postProfileImg = (req, res) => {
+        const userId = req.user.id
+
+        const imgPath = req.hostname + ':5000' + '/api/v1/uploads/' + req.file.filename
+
+        const data = userControllers.editProfileImg(userId, imgPath)
+        res.status(200).json(data)
+    }
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
 
 
 
@@ -282,7 +354,10 @@ module.exports ={
   postgetById,
   postregister,
   postremove,
-  postedit
+  postedit,
+  removeMyUser,
+  getMyUser,
+  postProfileImg
 }
 
 
