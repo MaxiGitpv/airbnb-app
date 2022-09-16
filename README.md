@@ -130,49 +130,84 @@ ________________________________
 
     ```js
     //* Dependencias
-    const express = require('express')
-
-    // dependencias de Rutas de autenticacion
-    const passport = require('passport')
-    require('./middleware/auth.middleware')(passport)
-
-
-    //* Configuraciones iniciales
-    const app = express()
-
-    // Esta confirmacion es para habilitar el req.body
-    app.use(express.json())
-
-    app.get('/', (req, res) => {
-        res.status(200).json({message: 'Bienvenidos ami aPP'})
-    })
+const express = require('express')
+const path = require('path')
+const {db} = require('./utils/database')
 
 
 
 
-    // Archivos de rutas
-    const userRouter = require('./users/users.router').router
-    const authRouter = require('./auth/auth.router').router
-
-    app.use('/api/v1/users', userRouter)
-    app.use('/api/v1/auth', authRouter)
-
-
-    // Rutas protegidas
-    app.get('/example', 
-        passport.authenticate('jwt', {session: false}),    
-        (req, res ) => {
-        res.status(200).json({message: 'Bienvenido a mi ruta protegida', email: req.user.email, pass: req.user.password })
-    })
+// dependencias de Rutas de autenticacion
+const passport = require('passport')
+require('./middleware/auth.middleware')(passport)
 
 
 
 
 
-    app.listen(5000, ()=> {
-        console.log('server started at port 5000')
-    })
+//* Configuraciones iniciales
+const app = express()
 
+
+
+// database (Siqueluze)
+db.authenticate()
+    .then(() => console.log('Database Authenticated'))
+    .catch(err => console.log(err))
+
+db.sync()
+    .then(()=> console.log('Database synced'))
+    .catch(err => console.log(err))
+
+    
+
+
+
+// Esta confirmacion es para habilitar el req.body
+app.use(express.json())
+
+app.get('/', (req, res) => {
+    res.status(200).json({message: 'Bienvenidos ami aPP'})
+})
+
+
+
+
+// db.authenticate()
+//     .then( () => console.log('Database Authenticated'))
+//     .catch(err => console.log(err))
+
+// db.sync()
+// .then(()=> console.log( 'Database synced'))
+// .catch(err => console.log(err))
+
+// Archivos de rutas
+const userRouter = require('./users/users.router').router
+const postsRouter = require('./users/posts.router').router
+
+const authRouter = require('./auth/auth.router').router
+
+
+app.use('/api/v1/users', userRouter)
+app.use('/api/v1/posts', postsRouter)
+app.use('/api/v1/auth', authRouter)
+
+
+// Rutas protegidas
+app.get('/api/v1/uploads/:imgName', (req, res ) => {
+    const imgName = req.params.imgName
+    res.status(200).sendFile( path.resolve('uploads/') + '/'+ imgName )
+})
+
+
+
+app.listen(5000, ()=> {
+    console.log('server started at port 5000')
+})
+
+exports.default = app
+exports.app = app
+module.exports = app
 
     ```
 
@@ -200,111 +235,219 @@ const userDB = [] // Crear un arreglo para la base de datos de todos los usuario
 
 const uuid = require('uuid')
 const { hashPassword } = require('../utils/crypt')
+const Users = require('../models/user.model')
+
 
 
 const userDB = [{
-    "id": "ac3c109b-ea85-4a3b-9f6b-33112676354a",
-    "first_name": "Maximo 2",
-    "last_name": "Amaya",
-    "email": "Juliac@example.com",
-    "password": "$2b$10$lxndLaVIZwTLNCUNjiMTOuCy4Ycj3/UwtNPKb9SeDMSinUfM828ey",
+    "id": "e07fe448-b327-4aea-a131-7dc9300c8f56",
+    "first_name": "Maximo 1",
+    "last_name": "Perea",
+    "email": "maxi01@example.com",
+    "password": "$2b$10$mTGU0Suc0YrwVfZcvEo83OLxgR5vP8Meea6IV3i9wf29dvmYgPuGS", //? root
     "phone": "+57321548848",
-    "birthday_date": "08/11/1994",
-    "rol": "normal",
+    "birthday_date": "07/12/1990",
+    "role": "admin",
     "profile_image": "imagen.com/img/example.png",
     "country": "Colombia",
     "is_active": true,
     "verified": false
   },
   { 
-  "id": "953243ea-cfb2-4a25-9392-54c5351e8bdf",
-  "first_name": "Maxxx 1",
-  "last_name": "Perea",
-  "email": "Juliac@example.com",
-  "password": "$2b$10$hV8/hFLIWrkO7QM5mWNq8OMiCC.X.rMRUoN3WT6eZcfwg6rVgl3Hm",
-  "phone": "+57321548848",
-  "birthday_date": "08/11/1994",
-  "rol": "normal",
-  "profile_image": "imagen.com/img/example.png",
-  "country": "Colombia",
-  "is_active": true,
-  "verified": false
+    "id": "b22bd64e-1a72-4fba-b824-a0f20c2a9a6e",
+    "first_name": "Julieth 2",
+    "last_name": "Amaya",
+    "email": "Juliac@example.com",
+    "password": "$2b$10$ETe/HyBFgWwY4ZwzodjnIeGFXv8HX/KtXp0jGlHMgFyEhO1Nmtfo2", //? root123
+    "phone": "+57321548848",
+    "birthday_date": "08/11/1994",
+    "role": "normal",
+    "profile_image": "imagen.com/img/example.png",
+    "country": "Colombia",
+    "is_active": true,
+    "verified": false
+    },
+    {
+    "id": "e4613411-6cda-4761-8337-333ffa6a4eac",
+    "first_name": "Matias 3",
+    "last_name": "Perea Amaya",
+    "email": "mitias2020@example.com",
+    "password": "$2b$10$YUDDWTlIvigGQxqCOevhsOqiLpDsCMUBMTrBwVLzGfNPm/.gLtWd6", //? root123456
+    "phone": "+57321548848",
+    "birthday_date": "9/11/2020",
+    "role": "normal",
+    "profile_image": "imagen.com/img/example.png",
+    "country": "Colombia",
+    "is_active": true,
+    "verified": false
     }
 ]
+// CREARE USER
+/* {
+    "first_name": "Matias 3",
+    "last_name": "Perea Amaya",
+    "email": "mitias2020@example.com",
+    "password": "root123456",
+    "phone": "+57321548848",
+    "birthday_date": "9/11/2020",
+    "rol": "normal",
+    "profile_image": "imagen.com/img/example.png",
+    "country": "Colombia",
+    "is_active": true,
+    "verified": false
+    } 
+*/
+
+
+// LOGIN USER
+/* 
+    {
+        "email": "maxi01@example.com",
+        "password": "root"
+
+    }
+*/
 
 
 //GET
-const getAllUsers = () => {
-    return userDB
+const getAllUsers = async () => {
+    const data = await Users.findAll({
+        attributes: {
+            exclude: ['password']
+        }
+    })
+    return data
     //? select * from users;
 }
 
 
+
 //GET/:id
-const getUserById = (id)=> {
-    const data = userDB.filter((item) => item.id === id)
-    return data.length ? data[0] : false
+const getUserById = async (id)=> {
+
+    const data = await Users.findOne({
+        where: {
+            id: id
+        },
+        attributes: {
+            exclude: ['password']
+        }
+    }) 
+    return data
+
+    // const data = userDB.filter((item) => item.id === id)
+    // return data.length ? data[0] : false
     //? select * from users where id = ${id};
 }
 
 
 
 //POST
-const createUser = (data) => {
-    const newUser = {
-        id: uuid.v4(), //obligatorio y unico
-        first_name: data.first_name, //obligatorio
-        last_name: data.last_name, //obligatorio
-        email: data.email, //obligatorio y unico
-        password: hashPassword(data.password),   //obligatorio
-        phone: data.phone ?  data.phone : '',
-        birthday_date: data.birthday_date,  //obligatorio
-        rol: 'normal',   //obligatorio y por defecto "normal"
-        profile_image: data.profile_image ? data.profile_image : '',
-        country: data.country, //obligatorio
-        is_active: true,  //obligatorio y por defecto true
-        verified: false //obligatorio y por defecto false
-    }
-    userDB.push(newUser)
+// const createUser = async (data) => {
+//     const newUser = await Users.create({
+//         id: uuid.v4(),
+//         first_name: data.first_name, 
+//         last_name: data.last_name, 
+//         email: data.email, 
+//         password: hashPassword(data.password),   
+//         phone: data.phone ?  data.phone : '',
+//         birthday_date: data.birthday_date,  
+//         role: "normal",  
+//         profile_image: data.profile_image,
+//         country: data.country, 
+//         is_active: true, 
+//         verified: false 
+//     })
+//     return newUser
+// }
+
+
+// controlador con siquelize
+
+const createUser = async (data) => {
+    const newUser = await Users.create({
+        ...data,
+        id: uuid.v4(),
+        password: hashPassword(data.password),   
+        role: "normalitoMijo",  
+        is_active: true, 
+        verified: true 
+    })
     return newUser
 }
 
 
 
+
+
+
+
+
 //PUT
-const editUser = (id, data) => {
-    const index = userDB.findIndex(user => user.id === id)
-    if (index !== -1){
-        userDB[index] ={
-            id: id,
-            first_name: data.first_name, 
-            last_name: data.last_name,
-            email: data.email, 
-            password: userDB[index].password,
-            phone: data.phone,
-            birthday_date: data.birthday_date,
-            rol: 'normal',
-            profile_image: data.profile_image,
-            country: data.country, 
-            is_active: true, 
-            verified: false
-        } 
-        return userDB[index]
-    }else {
-        return createUser(data)
+const editUser = async (userId, data, userRol) => {
+   
+
+    if(userRol === 'admin'){
+        const {id, password, verified, ...newData} = data
+
+        const response = await Users.update({
+            ...newData
+        }, { 
+            where: {
+                id: userId
+            }
+        })
+        return response
+    } else {
+        const {id, password, verified, role, ...newData} = data
+        
+        const response = await Users.update({
+            ...newData
+        }, { 
+            where: {
+                id: userId
+            }
+        })
+        return response
     }
+
 }
+
+//     if (index !== -1){
+//         userDB[index] ={
+//             id: id,
+//             first_name: data.first_name, 
+//             last_name: data.last_name,
+//             email: data.email, 
+//             password: userDB[index].password,
+//             phone: data.phone,
+//             birthday_date: data.birthday_date,
+//             role: userRol === 'admin' ? data.rol: 'normal',
+//             profile_image: data.profile_image,
+//             country: data.country, 
+//             is_active: true, 
+//             verified: false
+//         } 
+//         return userDB[index]
+//     }else {
+//         return createUser(data)
+//     }
+// }
+
+
 
 //DELETE/:id
 const deleteUser = (id) => {
-    const index = userDB.findIndex(user => user.id === id)
-    if(index !== -1 ){
-        userDB.splice(index, 1)
-        return true
-    }else {
-        return false
-    }
+    const data = Users.destroy({
+        where: {
+            id
+        }
+    })
+    return data
 }
+
+
+
 
 //COMPARE PASSWORD 
 
@@ -313,177 +456,511 @@ const getPostByEmail = (email) => {
     return data.length ? data[0] : false
 } 
 
+
+
+const editProfileImg = (userID, imgUrl) => {
+    const index = userDB.findIndex(user => user.id === userID)
+    if(index !== -1){
+        userDB[index].profile_image = imgUrl
+        return userDB[index]
+    }
+    return false
+
+}
+
+
+
+
+
+
+
+
+
+// POST CREATED
+
+
+const postsDB = [{
+    "id": "5185e0a9-fb29-42c4-9799-0a91671dc5a0",
+    "title": "Maximo 1",
+    "content": "Esto es un post de Maximo",
+    "header_image": "miimagen.png",
+    "user_id": "e07fe448-b327-4aea-a131-7dc9300c8f56",
+    "published": true
+  },
+  {
+    "id": "18147cb5-e783-4dc3-b98a-7902ca9d5c5b",
+    "title": "Julieth 2",
+    "content": "Esto es un post de Julieth",
+    "header_image": "unaimagencita.png",
+    "user_id": "b22bd64e-1a72-4fba-b824-a0f20c2a9a6e",
+    "published": true
+  },
+  {
+    "id": "9a1f3496-4ed1-4cd8-975e-b910423ea35a",
+    "title": "Matias 3",
+    "content": "Esto es un post de Matias",
+    "header_image": "dosanos.png",
+    "user_id": "e4613411-6cda-4761-8337-333ffa6a4eac",
+    "published": true
+  }
+
+]
+
+  // CREATE POST
+/*
+   {
+    "title": "Maximo 1",
+    "content": "Esto es un post",
+    "header_image": "ur.png",
+    "user_id": "uuid",
+    "published": true
+    }
+*/
+
+const getAllPost = () => {
+    return postsDB 
+}
+
+const getPostById = (id) => {
+    const data = postsDB.filter(item => item.id === id)
+    return data.length ? data[0] : false
+} 
+
+
+
+
+const createPost = (userId, data) =>  {
+    const newPost = {
+        id: uuid.v4(),
+	    title: data.title,
+	    content: data.content,
+	    header_image: data.header_image,
+	    user_id: userId,//Aqui hara referencia al usuario de tu postk
+	    published: true
+    }
+    postsDB.push(newPost)
+    return newPost
+}
+
+
+// const result = createPost({title: 'hola'})
+// console.log(result)
+
+
+const editPost = (id, data) => {
+    const index = postsDB.findIndex(user => user.id === id)
+    if(index !== -1){
+        postsDB[index] = {
+        id: uuid.v4(),
+	    title: "string",
+	    content:"string",
+	    header_image: "url_to_img",
+	    user_id: "uuid",//Aqui hara referencia al usuario de tu postk
+	    published: true
+        }
+        return postsDB[index]
+    }else {
+        createPost(data)
+    }
+}
+
+
+
+
+
+
+const deletePost = (id) => {
+    const index = postsDB.findIndex(user => user.id === id)
+    if (index !== -1){
+        postsDB.splice(index, 1)
+        return true
+    } else {
+        return false
+    } 
+    
+}
+
+const getUserPost = (user_id) =>  {
+    const data = postsDB.filter(post => post.user_id === user_id)
+    return data
+}
+const resul = getUserPost()
+console.log(resul)
+
+
+
 module.exports = {
+    getUserPost,
     createUser,
     getAllUsers,
     getUserById,
     editUser,
     deleteUser,
-    getPostByEmail
+    getPostByEmail,
+    getAllPost,
+   getPostById,
+   createPost,
+   editPost,
+   deletePost,
+   editProfileImg
+
 }
+
+
 
 
 ```
 
+    ///////////////////
 
 # (users.http.js = Manejo de las solicitudes y las respuestas )
 
 ```js
     const userControllers = require('./users.controllers')
 
-    const getAll = (req, res) => {
-        const data = userControllers.getAllUsers()
-        res.status(200).json({ item: data.length, users: data })
-    }
 
-    const getById = (req, res) => {
-        const id = req.params.id
-        const data = userControllers.getUserById(id)
 
-        if (data) {
-            res.status(200).json(data)
-        } else {
-            res.status(404).json({ message: `El usuario ${id} no existe` })
-        }
-    }
+const getAll = (req, res) => {
+    userControllers.getAllUsers()
+    .then((response) => {
+        res.status(200).json({ item: response.length, users: response })
+    })
+    .catch(err =>{ res.status(400).json(err)
+    
+    })
+}
 
-    // {
-    //     "id": 1,
-    //     "first_name": "Maximo",
-    //     "last_name": "Perea",
-    //     "email": "max@gmail.com", 
-    //     "password": "root123",
-    //     "phone": "987654321",
-    //     "birthday_date": "07/12/1990",
-    //     "rol": "normal",
-    //     "profile_image": "http://miimage.com",
-    //     "country": "Colombia", 
-    //     "is_active": true, 
-    //     "verified": false 
+const getById = (req, res) => {
+    const id = req.params.id
+    userControllers.getUserById(id)
+
+    .then((response) => {
+        res.status(200).json(response)
+    })
+    .catch((err) => res.status(400).json({ message: `El usuario ${id} no existe` }))
+
+
+    // if (data) {
+    //     res.status(200).json(data)
+    // } else {
+    //     res.status(404).json({ message: `El usuario ${id} no existe` })
     // }
+}
 
-    const register = (req, res) => {
-        const data = req.body
-        if (!data) {
-            return res.status(400).json({ message: 'Missing Data' })
-        } 
-        if (
-            !data.first_name ||
-            !data.last_name ||
-            !data.email ||
-            !data.password ||
-            !data.birthday_date ||
-            !data.country
-        ) {
-            return res.status(400).json({
-                message: 'All Fields must be completed', fields: {
-                    first_name: 'string',
-                    last_name: 'string',
-                    email: 'example@example.com',
-                    password: 'string',
-                    birthday_date: 'DD/MM/AAAA',
-                    country: 'string'
-                }
-            })
+// {
+//     "id": 1,
+//     "first_name": "Maximo",
+//     "last_name": "Perea",
+//     "email": "max@gmail.com", 
+//     "password": "root123",
+//     "phone": "987654321",
+//     "birthday_date": "07/12/1990",
+//     "rol": "normal",
+//     "profile_image": "http://miimage.com",
+//     "country": "Colombia", 
+//     "is_active": true, 
+//     "verified": false 
+// }
+
+const register = (req, res) => {
+    const data = req.body
+    if (!data) {
+        return res.status(400).json({ message: 'Missing Data' })
+    } 
+    if (
+        !data.first_name ||
+        !data.last_name ||
+        !data.email ||
+        !data.password ||
+        !data.birthday_date ||
+        !data.country
+    ) {
+        return res.status(400).json({
+            message: 'All Fields must be completed', fields: {
+                first_name: 'string',
+                last_name: 'string',
+                email: 'example@example.com',
+                password: 'string',
+                birthday_date: 'DD/MM/AAAA',
+                country: 'string'
+            }
+        })
+    }else {
+      userControllers.createUser(data) 
+      .then((response) => {
+          res.status(201).json({ 
+            message: ` User has been created succesfully with id: ${response.id}`,
+            user: response,
+             })
+        })
+        .catch(err => {
+        res.status(400).json({err})
+        })
+    }
+}
+
+
+
+const remove = (req, res) => {
+    const id = req.params.id
+    userControllers.deleteUser(id)
+    .then((response) => {
+        if (response){
+            res.status(204).json()
         }else {
-        const response = userControllers.createUser(data) 
-        return res.status(201).json(
-            {message: ` User: ${response.first_name} has been created succesfully`, user: response})
+            res.status(400).json({message: 'Invalid ID'})
         }
+    
+    })
+}
+
+
+
+    const edit = (req, res) => {
+        const id = req.params.id
+        const data = req.body
+      if (!Object.keys(data).length){
+        return res.status(400).json({ message: 'Missing Data'})
+      } else if (
+        !data.first_name ||
+        !data.last_name ||
+        !data.email ||
+        !data.phone ||
+        !data.role ||
+        !data.profile_image ||
+        !data.birthday_date ||
+        !data.country ||
+        !data.is_active
+        ) {
+          return res.status(400).json({
+            message: 'All Fields must be completed', fields: {
+              first_name: 'string',
+              last_name: 'string',
+              email: 'example@example.com',
+              phone: '+57321548848',
+              role: 'normal',
+              profile_image: 'imagen.com/img/example.png',
+              birthday_date: 'DD/MM/AAAA',
+              country: 'string',
+              is_active: true
+          }
+      })
+      } else {
+        const response = userControllers.editUser(id, data)
+        return res.status(200).json({ message: 'ID edited succesfully', user: response})
+      }
     }
 
-    const remove = (req, res) => {
-        const id = req.params.id
+    const getMyUser = (req, res) => {
+        const id = req.user.id
+        const data = userControllers.getUserById(id)
+        res.status(200).json(data)
+    }
+
+    const removeMyUser = (req, res) => {
+        const id = req.user.id
         const data = userControllers.deleteUser(id)
         
         if(data){
-            return res.status(204).json()
+            res.status(204).json()
         } else {
-            return res.status(400).json({ message: 'Invalid ID'})
+            res.status(400).json({ message: 'Invalid ID'})
         }
     }
 
-        const edit = (req, res) => {
-            const id = req.params.id
-            const data = req.body
+
+    const ediMyUser = (req, res) => {
+        const id = req.user.id
+        const data = req.body
         if (!Object.keys(data).length){
             return res.status(400).json({ message: 'Missing Data'})
-        } else if (
+          } else if (
             !data.first_name ||
             !data.last_name ||
             !data.email ||
             !data.phone ||
-            !data.rol ||
             !data.profile_image ||
             !data.birthday_date ||
             !data.country ||
             !data.is_active
             ) {
-            return res.status(400).json({
+              return res.status(400).json({
                 message: 'All Fields must be completed', fields: {
-                first_name: 'string',
-                last_name: 'string',
-                email: 'example@example.com',
-                password: 'string',
-                phone: '+57321548848',
-                rol: 'normal',
-                profile_image: 'imagen.com/img/example.png',
-                birthday_date: 'DD/MM/AAAA',
-                country: 'string',
-                is_active: true
-            }
-        })
-        } else {
+                  first_name: 'string',
+                  last_name: 'string',
+                  email: 'example@example.com',
+                  phone: '+57321548848',
+                  role: 'normal',
+                  profile_image: 'imagen.com/img/example.png',
+                  birthday_date: 'DD/MM/AAAA',
+                  country: 'string',
+                  is_active: true
+              }
+          })
+          } else {
             const response = userControllers.editUser(id, data)
-            return res.status(200).json({ message: 'ID edited succesfully', user: response})
-        }
-        }
-
-
-        const ediMyUser = (req, res) => {
-            const id = req.user.id
-            const data = req.body
-            if (!Object.keys(data).length){
-                return res.status(400).json({ message: 'Missing Data'})
-            } else if (
-                !data.first_name ||
-                !data.last_name ||
-                !data.email ||
-                !data.phone ||
-                !data.profile_image ||
-                !data.birthday_date ||
-                !data.country ||
-                !data.is_active
-                ) {
-                return res.status(400).json({
-                    message: 'All Fields must be completed', fields: {
-                    first_name: 'string',
-                    last_name: 'string',
-                    email: 'example@example.com',
-                    phone: '+57321548848',
-                    rol: 'normal',
-                    profile_image: 'imagen.com/img/example.png',
-                    birthday_date: 'DD/MM/AAAA',
-                    country: 'string',
-                    is_active: true
-                }
-            })
-            } else {
-                const response = userControllers.editUser(id, data)
-                return res.status(200).json({
-                    message: 'ID edited succesfully', user: response})
-            }
-        }
-
-
-    module.exports ={
-    getAll,
-    getById,
-    register,
-    remove,
-    edit,
-    ediMyUser
+            return res.status(200).json({
+                 message: 'ID edited succesfully', user: response})
+          }
     }
+
+    
+    const postProfileImg = (req, res) => {
+        const userId = req.user.id
+
+        const imgPath = req.hostname + ':5000' + '/api/v1/uploads/' + req.file.filename
+
+        const data = userControllers.editProfileImg(userId, imgPath)
+        res.status(200).json(data)
+    }
+
+
+
+
+
+
+
+
+
+
+
+    // SERVICIOS DE POST
+
+    const getuserPost = (req, res) =>  {
+        const userID = req.user.id
+        const data = userControllers.getUserPost(userID)
+        res.status(200).json(data)
+    }
+    
+
+const postgetAll = (req, res) => {
+    const data = userControllers.getAllPost()
+    return res.status(200).json({item: data.length, users: data})
+}
+
+const postgetById = ( req, res) => {
+    const id = req.params.id
+    const data = userControllers.getPostById(id)
+    if(data) {
+        return res.status(200).json({message: 'ID getting succesfully', data})
+    }else {
+        return res.status(400).json({message: `The user ${id} not found`})
+    }
+}
+
+
+// {
+//      id: uuid.v4(),
+// 	    title: "string",
+// 	    content:"string",
+// 	    header_image: "url_to_img",
+// 	    user_id: "uuid",//Aqui hara referencia al usuario de tu postk
+// 	    published: true,
+//      password: hashPassword(data.password)
+//  }
+
+
+const postregister = (req, res) => {
+    const userId = req.user.id
+    const data = req.body
+    
+    
+    if(!data){
+        return res.status(400).json({message: 'Missing Data'})
+    }
+        if( 
+            !data.title ||
+            !data.content ||
+            !data.published 
+        ){
+            return res.status(404).json({
+            message: 'All fiels is not completed', 
+            fiels: {
+                title: "string",
+                content:"string",
+                header_image: "url_to_img",
+                user_id: "uuid",
+                published: true
+                } 
+            
+
+            })
+
+        }else {
+            const response = userControllers.createPost(userId, data)
+                return res.status(201).json(
+                  {message: `Post: ${response.title} has been created`, user: response})   
+                  
+        } 
+}
+
+
+
+const postremove = (req, res) => {
+  const id = req.params.id
+  const data = userControllers.deletePost(id)
+  
+  if(data){
+      return res.status(204).json()
+  } else {
+      return res.status(400).json({ message: 'Invalid ID'})
+  }
+}
+
+  const postedit = (req, res) => {
+      const id = req.params.id
+      const data = req.body
+    if (!Object.keys(data).length){
+      return res.status(400).json({ message: 'Missing Data'})
+    } else if( 
+      !data.title ||
+      !data.content ||
+      !data.user_id ||
+      !data.published
+  ){
+      return res.status(404).json({
+      message: 'All fiels is not completed', 
+      fiels: {
+          title: "string",
+          content:"string",
+          header_image: "url_to_img",
+          user_id: "uuid",
+          published: true,
+          } 
+      
+
+      })
+
+  } else {
+      const response = userControllers.editPost(id, data)
+      return res.status(200).json({ message: 'ID edited succesfully', user: response})
+    }
+  }
+
+
+
+
+module.exports ={
+    getuserPost, 
+  getAll,
+  getById,
+  register,
+  remove,
+  edit,
+  ediMyUser,
+  postgetAll,
+  postgetById,
+  postregister,
+  postremove,
+  postedit,
+  removeMyUser,
+  getMyUser,
+  postProfileImg
+}
+
+
+
+
 
 ```
 
@@ -496,25 +973,56 @@ _____________________________________________________
 
 const router = require('express').Router()
 const passport = require('passport')
+const {upload} = require('../utils/multer')
+
+
+
+// const { TimeoutError } = require('sequelize/types')
+
+const { rolAsminMiddleware } = require('../middleware/adminRole')
 require('../middleware/auth.middleware')(passport)
 
 
 const userServices = require('./users.http')
 
 
-router.route('/')   //* /api/v1/users/
-    .get(userServices.getAll)
-    .post(userServices.register)
 
-router.route('/me')
-    .put(passport.authenticate('jwt', {session: false}) ,userServices.ediMyUser)
+//RUTAS DE USUARIOS
 
+    router.route('/')   //* /api/v1/users/
+        .get(userServices.getAll)
+        .post(userServices.register)
     
-router.route('/:id')  //* /api/v1/users/:id
-    .get(userServices.getById)
-    .put(userServices.edit)
-    .delete(userServices.remove)
+   
 
+    router.route('/me')
+        .get(passport.authenticate('jwt', {session: false}), userServices.getMyUser)
+        .put(passport.authenticate('jwt', {session: false}), userServices.ediMyUser)
+        .delete(passport.authenticate('jwt', {session: false}), userServices.removeMyUser)
+
+        
+    // RUTAS PARA MULTER
+    router.route('/me/profile-img')
+        .post(passport.authenticate('jwt', {session: false}), upload.single('profile-img'), userServices.postProfileImg)
+
+
+
+    router.route('/:id')  //* /api/v1/users/:id
+        .get(userServices.getById)
+        .put(userServices.edit)
+        .delete(passport.authenticate('jwt', {session: false}), rolAsminMiddleware, userServices.remove)
+        
+
+    router.route('/me/posts') //* /api/v1/users/me/posts
+        .get(passport.authenticate('jwt', {session: false}), userServices.getuserPost)
+    
+    router.route('/me/posts/:id') //* /api/v1/users/me/posts/:id 
+        .get(passport.authenticate('jwt', {session: false}), userServices.postgetById)
+        .put(passport.authenticate('jwt', {session: false}), userServices.postedit)
+        .delete(passport.authenticate('jwt', {session: false}), userServices.postremove)
+    
+    
+        
 
 
 exports.router =  router
@@ -537,24 +1045,78 @@ Se define una carpeta para guardar las configuracion de contraseñas incriptadas
 
 npm install bcrypt
 
-```js
+     ```js
 const bcrypt = require('bcrypt')    //importamos la libreria bcrypt
 
 const hashPassword = (root) => {     // funcion para incriptar las contraseñas, con parametros las contraseña root
     return bcrypt.hashSync(root, 10)  // retornamos bcrypt con su metodo hashSync(le pasamos la contraseña, y la salt= que son las veces que se itera la contraseña) 
 }
 
-const comparePassword = (root, hashePassword) => {   // funcion para comparar la contraseña
-    return bcrypt.compareSync(root, hashePassword)  // retornamos bcrypt con su metodo compareSync(le pasamos la contraseña, y hashPassword= que es la contraseña incritada (root))  
+const comparePassword = (root, hashPassword) => {   // funcion para comparar la contraseña
+    return bcrypt.compareSync(root, hashPassword)  // retornamos bcrypt con su metodo compareSync(le pasamos la contraseña, y hashPassword= que es la contraseña incritada (root))  
 }
 
 module.exports = {   // exportamos las funciones para usarlas en los controladores
     hashPassword,
     comparePassword
 }
+```
 
+    ///////////////////
+
+  # SEQUELIZE BASE DE DATOS
+
+    npm install sequelize pg pg-hstore
+
+    CARPETA utils - database.js
+
+```js
+    const {Sequelize} = require('sequelize')
+
+    const db = new Sequelize({
+    dialect: 'postgres',
+    host: 'localhost',
+    username: 'postgres',
+    password: 'root2022',
+    database: 'skeleton',
+    port: 5432
+    })
+
+    module.exports ={
+    db
+    }
+```
+
+    ///////////////////
+
+    # MULTER 
+
+    npm install express multer
+
+```js
+
+    const multer = require('multer')
+    const path = require('path')
+
+
+    const storage = multer.diskStorage({
+        destination: (req, file, cb) => {
+            cb(null, path.resolve('uploads/'))
+        },
+        filename: (req, file, cb) => {
+            cb(null,  'academlo' + Date.now() + '-' + file.originalname)
+        }
+        
+    })
+
+    const upload = multer({storage})
+
+    exports.upload = upload 
 
 ```
+
+
+/////////////////////
 
 # 5 AUTH = Carpeta de archivos de autorizacion ( auth.controlles.js, auth.http.js, auth.router.js = archivo para autentificar a ususarios y rutas)
 
@@ -562,6 +1124,7 @@ module.exports = {   // exportamos las funciones para usarlas en los controlador
  (auth.controlles.js)
 
 ```js
+
 const {getPostByEmail} = require('../users/users.controllers')
 const {comparePassword} = require('../utils/crypt')
 
@@ -583,9 +1146,12 @@ const loginUser = (email, password) => {
 module.exports = {
     loginUser
 }
+
 ```
 
-#  auth.http.js
+    ///////////////////
+
+    #auth.http.js
 
 ```js
 const {loginUser} = require('./auth.controllers')
@@ -621,16 +1187,21 @@ module.exports ={
 }
 
 ```
+    /////////////////
 
-# auth.router.js
+    # auth.router.js
 
 ```js 
 const router = require('express').Router()
 
 const authServices = require('./auth.http')
+const {register} = require('../users/users.http')
+
 
 router.post('/login', authServices.login)
+router.post('/register', register)
 
+//* /api/v1/auth/login
 
 exports.router = router
 
@@ -646,6 +1217,8 @@ exports.router = router
 
 ```js
 
+const { getUserById } = require("../users/users.controllers");
+
 const JwtStrategy = require("passport-jwt").Strategy,
         ExtractJwt = require("passport-jwt").ExtractJwt;
 
@@ -656,15 +1229,47 @@ module.exports = (passport) => {
     };
     passport.use(
         new JwtStrategy(opts, (decoded, done) => {
-            console.log("decoded jwt", decoded);
-            return done(null, decoded); // decoded sera el que retornaremos cuando se ejecute exitosamente la autenticacion
+            const data = getUserById(decoded.id)
+
+            if (data){
+                console.log("decoded jwt", decoded);
+                return done(null, decoded); // decoded sera el que retornaremos cuando se ejecute exitosamente la autenticacion
+            }else {
+                return done(null, false)
+            }
         })
     );
 };
 
 ```
 
-# MIDDLEWARE 
+///////////////////
+
+ # AdminRole.js
+
+```js 
+
+
+
+    const rolAsminMiddleware = (req, res, next) => {
+        
+        const rol = req.user.rol
+        if(rol === 'admin'){
+            next()
+        }else {
+            res.status(400).json({status: 'error', message: 'User not authorized to make this request'})
+        }
+    }
+
+    exports.rolAsminMiddleware = rolAsminMiddleware  
+
+
+```
+
+///////////////////
+
+
+ # MIDDLEWARE EXPLICATION
  Passport (Solo para Login y para proteger rutas)
 
  Lo primero sera crear el servicio para poder hacer login y crear usuarios.
@@ -688,6 +1293,7 @@ app.post('/login', (req, res) => {
 	res.status(201).json({token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbWluQGFkbWluLmNvbSIsInBhc3N3b3JkIjoicm9vdDEyMyJ9.NvfPbDJmhnBdlFi1cEuQPkLhDnvCqjANuQ-QGGvCBr4'})
 })
 ```
+    /////////////////
 
 Lo siguiente va a ser crear un archivo:
 
@@ -720,7 +1326,7 @@ app.get('/todos', passport.authenticate('jwt', {session: false}), (req, res) => 
 	})
 })
 ```
-
+    /////////////////
  Ejemplo de login
 
 Usuario:
@@ -773,7 +1379,7 @@ const checkUserCredentials = (username, password) => {
 ```
 
 
-
+///////////////////
 
 
 
@@ -796,6 +1402,8 @@ module.exports = {   // exportamos las funciones para usarlas en los controlador
     comparePassword
 }
 ```
+
+///////////////////
 
 # TESTING 
 
@@ -861,8 +1469,10 @@ describe('Test  unitario de mis usuarios', () => {
 })
 
 
-
 ```
+
+///////////////////
+
 
 INTEGRATION.TEST.JS
 
@@ -898,56 +1508,9 @@ describe('Suite de test de integracion de Usuarios', () => {
  ```
 
 
+    ///////////////////
 
-# MULTER 
-
-    npm install express multer
-
-```s
-
-const multer = require('multer')
-const path = require('path')
-
-
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, path.resolve('uploads/'))
-    },
-    filename: (req, file, cb) => {
-        cb(null,  'academlo' + Date.now() + '-' + file.originalname)
-    }
-    
-})
-
-const upload = multer({storage})
-
-exports.upload = upload 
-
-```
-
-# SEQUELIZE BASE DE DATOS
-
-    npm install sequelize pg pg-hstore
-
-    CARPETA utils - database.js
-
-    ```js
-    const {Sequelize} = require('sequelize')
-
-    const db = new Sequelize({
-    dialect: 'postgres',
-    host: 'localhost',
-    username: 'postgres',
-    password: 'root2022',
-    database: 'skeleton',
-    port: 5432
-    })
-
-module.exports ={
-    db
-}
-    ```
-# models 
+# CARPETA models 
 
     CARPETA models - initModel.js
 ```js
@@ -963,9 +1526,12 @@ const iniModels = () => {
 module.exports = iniModels
     
 ```
- CARPETA models - user.model.js
+
+    ///////////////////
+
+   models - user.model.js
 ```js
-    /*
+  /*
     {
     "id": "e07fe448-b327-4aea-a131-7dc9300c8f56",
     "first_name": "Maximo 1",
@@ -1010,13 +1576,11 @@ const Users = db.define('users', {
     password: {
         allowNull: false,
         type: DataTypes.STRING,
-        validate: {
-            min:8,
-        }
     },
     phone: {
         allowNull: false,
         type: DataTypes.STRING,
+        
     },
     birthday_date: {
         allowNull: false,
@@ -1037,6 +1601,11 @@ const Users = db.define('users', {
         allowNull: false,
         type: DataTypes.STRING,
     },
+    // status: {
+    //     allowNull: false,
+    //     type: DataTypes.STRING,
+    //     defaultValue: 'active // non-active, deleted, suspendef'
+    // },
     is_active: {
         allowNull: false,
         type: DataTypes.BOOLEAN,
@@ -1054,7 +1623,9 @@ module.exports = Users
 
 ``` 
 
- CARPETA models - posts.model.js
+    ///////////////////
+
+  models - posts.model.js
 ```js
     /*
     {
@@ -1102,5 +1673,29 @@ const Posts = db.define('posts', {
 })
 module.exports = Posts
 
+
+```
+
+
+    /////////////////
+
+ #CARPETA uploads
+
+```js
+
+Archivos png
+
+```
+
+
+
+///////////////////
+
+Archivo .env
+
+```js
+PORT = 8000
+HOST = 'localhost'
+PASSPORT = 'root2022'
 
 ```
