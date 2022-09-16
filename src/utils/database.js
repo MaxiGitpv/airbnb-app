@@ -5,7 +5,7 @@ const db = new Sequelize({
     host: 'localhost',
     username: 'postgres',
     password: 'root2022',
-    database: 'skeleton',
+    database: 'airbnb',
     port: 5432
 })
 

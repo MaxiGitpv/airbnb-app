@@ -108,38 +108,38 @@ const getUserById = async (id)=> {
 
 
 //POST
-// const createUser = async (data) => {
-//     const newUser = await Users.create({
-//         id: uuid.v4(),
-//         first_name: data.first_name, 
-//         last_name: data.last_name, 
-//         email: data.email, 
-//         password: hashPassword(data.password),   
-//         phone: data.phone ?  data.phone : '',
-//         birthday_date: data.birthday_date,  
-//         role: "normal",  
-//         profile_image: data.profile_image,
-//         country: data.country, 
-//         is_active: true, 
-//         verified: false 
-//     })
-//     return newUser
-// }
+const createUser = async(data) => {
+    const newUser = await Users.create({
+        id: uuid.v4(),
+        firstName: data.first_name, 
+        lastName: data.last_name, 
+        email: data.email, 
+        password: hashPassword(data.password),   
+        phone: data.phone,
+        birthdayDate: data.birthday_date,  
+        role: "normal",  
+        profileImage: data.profile_image,
+        country: data.country, 
+        status: 'active', 
+        verified: false, 
+    })
+    return newUser
+}
 
 
 // controlador con siquelize
 
-const createUser = async (data) => {
-    const newUser = await Users.create({
-        ...data,
-        id: uuid.v4(),
-        password: hashPassword(data.password),   
-        role: "normalitoMijo",  
-        is_active: true, 
-        verified: true 
-    })
-    return newUser
-}
+// const createUser = async (data) => {
+//     const newUser = await Users.create({
+//         ...data,
+//         id: uuid.v4(),
+//         password: hashPassword(data.password),   
+//         role: "normalitoMijo",  
+//         is_active: true, 
+//         verified: true 
+//     })
+//     return newUser
+// }
 
 
 

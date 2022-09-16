@@ -25,14 +25,23 @@ const Users = db.define('users', {
         type: DataTypes.UUID,
         allownull: false,
     },
-    first_name: {
+    firstName: {
         allowNull: false,
+        type: DataTypes.STRING,
+        field: 'first_name'
+    },
+    lastName: {
+        allowNull: false,
+        type: DataTypes.STRING,
+        field: 'last_name'
+    }, 
+    gender: {
+        type: DataTypes.STRING,
+        allowNull:false,
+    },
+    dni: {
         type: DataTypes.STRING
     },
-    last_name: {
-        allowNull: false,
-        type: DataTypes.STRING
-    }, 
     email: {
         allowNull: false,
         type: DataTypes.STRING(30),
@@ -49,16 +58,19 @@ const Users = db.define('users', {
         type: DataTypes.STRING,
         
     },
-    birthday_date: {
+    birthdayDate: {
         allowNull: false,
         type: DataTypes.DATEONLY,
+        field: 'birthday_date'
     },
     role: {
         allowNull: false,
-        type: DataTypes.STRING,
-        dafaulValue: 'normal',
+        type: DataTypes.UUID
     },
-    profile_image: {
+    address: {
+        type: DataTypes.STRING
+    },
+    profileImage: {
         type: DataTypes.STRING,
         validate: {
             isUrl: true
@@ -68,21 +80,26 @@ const Users = db.define('users', {
         allowNull: false,
         type: DataTypes.STRING,
     },
-    // status: {
-    //     allowNull: false,
-    //     type: DataTypes.STRING,
-    //     defaultValue: 'active // non-active, deleted, suspendef'
-    // },
-    is_active: {
+    status: {
         allowNull: false,
-        type: DataTypes.BOOLEAN,
-        defaultValues: true
+        type: DataTypes.STRING,
+        defaultValue: 'active' // non-active, deleted, suspendef'
     },
     verified: {
         allowNull: false,
         type: DataTypes.BOOLEAN,
         defaultValues: false
 
+    },
+    createdAt: {
+        type: DataTypes.DATE,
+        allowNull: false,
+        field: 'created_at'
+    },
+    updatedAt:{
+        type: DataTypes.DATE,
+        allowNull: false,
+        field: 'updated_at'
     }
 })
 
